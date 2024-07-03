@@ -1,36 +1,48 @@
-#include <Arduino.h>
-#include "WiFi.h"
+#include <WiFi.h>
+#include <WiFiManager.h> 
+
+WiFiManager wifiManager;
 
 void setup() {
   Serial.begin(115200);
+  delay(1000);
 
-  //Init WiFi as Station, start SmartConfig
-  WiFi.mode(WIFI_AP_STA);
-  WiFi.beginSmartConfig();
-
-  //Wait for SmartConfig packet from mobile
-  Serial.println("Waiting for SmartConfig.");
-  while (!WiFi.smartConfigDone()) {
-    delay(500);
-    Serial.print(".");
+  // Cihazın seri numarasını (chip ID) al
+  uint32_t chipId = 0;
+  for(int i=0; i<17; i=i+8) {
+    chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
   }
 
-  Serial.println("");
-  Serial.println("SmartConfig received.");
+  String ssid = "ESP32_" + String(chipId);
+  const char *password = "123456fd";
 
-  //Wait for WiFi to connect to AP
-  Serial.println("Waiting for WiFi");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
+  // WiFi bağlantısı için portalı başlat
+  wifiManager.autoConnect(ssid.c_str(), password);
 
-  Serial.println("WiFi Connected.");
-
+  // Bağlantı sağlandığında WiFi bilgilerini yazdır
+  Serial.println("Connected to WiFi!");
+  Serial.print("SSID: ");
+  Serial.println(WiFi.SSID());
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
+  Serial.print("MAC Address: ");
+  Serial.println(WiFi.macAddress());
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  // WiFi bağlantısını sürekli olarak kontrol et
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("WiFi disconnected, waiting for WiFi credentials...");
+    
+    // SSID ve şifreyi tekrar tanımla
+    uint32_t chipId = 0;
+    for(int i=0; i<17; i=i+8) {
+      chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
+    }
+    String ssid = "ESP32_" + String(chipId);
+    const char *password = "123456fd";
+
+    wifiManager.startConfigPortal(ssid.c_str(), password);
+  }
+  delay(10000); // Her 10 saniyede bir bağlantıyı kontrol et
 }
