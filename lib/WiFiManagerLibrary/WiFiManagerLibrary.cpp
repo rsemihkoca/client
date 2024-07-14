@@ -11,6 +11,7 @@ void WiFiManagerLibrary::setupWiFi() {
   String ssid = generateSSID();
 
   // WiFi bağlantısı için portalı başlat
+  wifiManager.setConnectTimeout(10);
   wifiManager.autoConnect(ssid.c_str(), password);
 
   // Bağlantı sağlandığında WiFi bilgilerini yazdır
@@ -28,7 +29,9 @@ void WiFiManagerLibrary::checkConnection() {
     Serial.println("WiFi disconnected, waiting for WiFi credentials...");
     
     String ssid = generateSSID();
-
+    // wifiManager.setCustomHeadElement("<style>body{background-color: #f0f0f0; font-family: Arial, sans-serif;}</style>");
+    // wifiManager.setCustomHeadElement("<meta name='viewport' content='width=device-width, initial-scale=1'>");
+    // wifiManager.setConfigPortalTimeout(120);
     wifiManager.startConfigPortal(ssid.c_str(), password);
   }
 }
