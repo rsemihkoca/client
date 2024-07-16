@@ -6,7 +6,7 @@ HTTPClientLibrary::HTTPClientLibrary() {
 
 BrokerResponse HTTPClientLibrary::postRequest(const char* url, String clientId, String username) {
   BrokerResponse responseStruct;
-  
+
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     http.begin(url);
@@ -40,8 +40,8 @@ BrokerResponse HTTPClientLibrary::postRequest(const char* url, String clientId, 
 
 BrokerResponse HTTPClientLibrary::parseResponse(String response) {
   BrokerResponse responseStruct;
-  
-  StaticJsonDocument<1024> doc;
+
+  StaticJsonDocument<2048> doc; // Increased size to accommodate the response
   DeserializationError error = deserializeJson(doc, response);
 
   if (error) {
@@ -58,12 +58,13 @@ BrokerResponse HTTPClientLibrary::parseResponse(String response) {
   responseStruct.brokerCred.password = broker_cred["password"].as<String>();
 
   JsonArray topics = doc["topics"];
-  for (JsonVariant topic : topics) {
-    JsonObject topicObj = topic.as<JsonObject>();
-    Topic t;
-    t.name = topicObj["name"].as<String>();
-    t.action = topicObj["action"].as<String>();
-    responseStruct.topics.push_back(t);
+  for (JsonObject topicObj : topics) {
+    for (JsonPair kv : topicObj) {
+      Topic t;
+      t.name = kv.key().c_str();
+      t.action = kv.value().as<String>();
+      responseStruct.topics.push_back(t);
+    }
   }
 
   return responseStruct;

@@ -16,7 +16,7 @@ void setup() {
   wifiManagerLibrary.setupWiFi();
   String deviceId =  hardwareLibrary.getHardwareSerialNumber();
 
-  BrokerResponse response = httpClientLibrary.postRequest("http://192.168.1.130:8000/client", deviceId, deviceId);
+  BrokerResponse response = httpClientLibrary.postRequest("http://192.168.0.20:8000/client", deviceId, deviceId);
 
   Serial.println("Broker Credentials:");
   Serial.print("Broker: ");
