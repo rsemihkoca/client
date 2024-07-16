@@ -1,4 +1,5 @@
 #include "HTTPClientLibrary.h"
+#include <ArduinoJson.h>
 
 HTTPClientLibrary::HTTPClientLibrary() {
   // Constructor if needed
@@ -14,7 +15,7 @@ BrokerResponse HTTPClientLibrary::postRequest(const char* url, String clientId, 
     http.setConnectTimeout(10000); // 10 second timeout
     http.setTimeout(10000); // 10 second timeout
 
-    StaticJsonDocument<200> doc;
+    JsonDocument doc;
     doc["client_id"] = clientId;
     doc["username"] = username;
     String requestBody;
@@ -24,6 +25,7 @@ BrokerResponse HTTPClientLibrary::postRequest(const char* url, String clientId, 
 
     if (httpResponseCode > 0) {
       String response = http.getString();
+      Serial.print(response);
       responseStruct = parseResponse(response);
     } else {
       Serial.print("Error on HTTP request: ");
@@ -41,7 +43,7 @@ BrokerResponse HTTPClientLibrary::postRequest(const char* url, String clientId, 
 BrokerResponse HTTPClientLibrary::parseResponse(String response) {
   BrokerResponse responseStruct;
 
-  StaticJsonDocument<2048> doc; // Increased size to accommodate the response
+  JsonDocument doc; // Increased size to accommodate the response
   DeserializationError error = deserializeJson(doc, response);
 
   if (error) {
