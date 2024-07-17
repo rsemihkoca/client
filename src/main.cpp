@@ -1,51 +1,65 @@
-#include <WiFiManagerLibrary.h>
-#include <HTTPClientLibrary.h>
 #include <HardwareLibrary.h>
+#include <HTTPClientLibrary.h>
+#include <WiFiManagerLibrary.h>
+#include <MQTTLibrary.h>
+#include <NTPClient.h>
+#include <WiFiUdp.h>
 
 
 HardwareLibrary hardwareLibrary;
-
 
 HTTPClientLibrary httpClientLibrary;
 
 WiFiManagerLibrary wifiManagerLibrary;
 
+MQTTLibrary mqttClient;
 
+// Define NTP Client to get time
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "pool.ntp.org");
+
+void callback1(char* topic, byte* payload, unsigned int length) {
+    // Handle messages for topic1
+    Serial.print("Message received on command topic: ");
+    Serial.write(payload, length);
+    Serial.println();
+}
 
 void setup() {
+  pinMode(2, OUTPUT);
   Serial.begin(115200); // Initialize serial communication at a baud rate of 115200
-
+  // timeClient.begin();
+  //GMT+3
+  // timeClient.setTimeOffset(10800);
   wifiManagerLibrary.setupWiFi();
-  String deviceId =  hardwareLibrary.getHardwareSerialNumber();
+  String deviceId = hardwareLibrary.getChipId();
 
   BrokerResponse response = httpClientLibrary.postRequest("http://192.168.0.20:8000/client", deviceId, deviceId);
+  response.print();
 
-  // Check if the response contains valid data
-  if (response.brokerCred.broker.length() > 0) {
-    Serial.println("Broker Credentials:");
-    Serial.print("Broker: ");
-    Serial.println(response.brokerCred.broker);
-    Serial.print("Port: ");
-    Serial.println(response.brokerCred.port);
-    Serial.print("Client ID: ");
-    Serial.println(response.brokerCred.client_id);
-    Serial.print("Username: ");
-    Serial.println(response.brokerCred.username);
-    Serial.print("Password: ");
-    Serial.println(response.brokerCred.password);
+/*   mqttClient.begin(response.brokerCred.broker.c_str(), response.brokerCred.port, response.brokerCred.client_id.c_str(), response.brokerCred.username.c_str(), response.brokerCred.password.c_str());
+  
+  String message = "Client " + deviceId + " at " + timeClient.getFormattedTime() + " is online";
+  mqttClient.publish(hardwareLibrary.getCommandTopic(), message.c_str());
+  mqttClient.publish(hardwareLibrary.getInferenceTopic(), message.c_str());
+  mqttClient.publish(hardwareLibrary.getLogTopic(), message.c_str());
+  mqttClient.publish(hardwareLibrary.getStateTopic(), message.c_str());
+  mqttClient.subscribe(hardwareLibrary.getCommandTopic(), callback1); */
 
-    Serial.println("Topics:");
-    for (const Topic& topic : response.topics) {
-      Serial.print(topic.name);
-      Serial.print(": ");
-      Serial.println(topic.action);
-    }
-  } else {
-    Serial.println("Failed to retrieve broker credentials");
-  }
 }
 
 void loop() {
   wifiManagerLibrary.checkConnection();
-  delay(5000); // Her 10 saniyede bir bağlantıyı kontrol et
+  // mqttClient.loop();
+  // timeClient.update();
+
+  delay(1000);
+  // String message = "Client " + deviceId + " at " + timeClient.getFormattedTime() + " is online";
+  // mqttClient.publish(hardwareLibrary.getCommandTopic(), message.c_str());
+  // mqttClient.publish(hardwareLibrary.getInferenceTopic(), message.c_str());
+  // mqttClient.publish(hardwareLibrary.getLogTopic(), message.c_str());
+  // mqttClient.publish(hardwareLibrary.getStateTopic(), message.c_str());
+
 }
+
+

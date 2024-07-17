@@ -5,7 +5,6 @@ WiFiManagerLibrary::WiFiManagerLibrary() {
 }
 
 void WiFiManagerLibrary::setupWiFi() {
-  Serial.begin(115200);
   delay(1000);
 
   String ssid = generateSSID();

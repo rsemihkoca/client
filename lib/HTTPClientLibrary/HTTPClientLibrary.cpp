@@ -25,7 +25,7 @@ BrokerResponse HTTPClientLibrary::postRequest(const char* url, String clientId, 
 
     if (httpResponseCode > 0) {
       String response = http.getString();
-      Serial.print(response);
+      Serial.println(response);
       responseStruct = parseResponse(response);
     } else {
       Serial.print("Error on HTTP request: ");
@@ -59,7 +59,7 @@ BrokerResponse HTTPClientLibrary::parseResponse(String response) {
   responseStruct.brokerCred.username = broker_cred["username"].as<String>();
   responseStruct.brokerCred.password = broker_cred["password"].as<String>();
 
-  JsonArray topics = doc["topics"];
+/*   JsonArray topics = doc["topics"];
   for (JsonObject topicObj : topics) {
     for (JsonPair kv : topicObj) {
       Topic t;
@@ -67,7 +67,7 @@ BrokerResponse HTTPClientLibrary::parseResponse(String response) {
       t.action = kv.value().as<String>();
       responseStruct.topics.push_back(t);
     }
-  }
+  } */
 
   return responseStruct;
 }
