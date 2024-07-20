@@ -22,10 +22,10 @@ public:
     void loop();
 
     // Publish a message to a specific topic
-    void publish(const char *topic, const char *payload);
+    bool publish(const char *topic, const char *payload);
 
     // Subscribe to a specific topic with a callback function
-    void subscribe(const char *topic, MQTTCallback callback);
+    bool subscribe(const char *topic, MQTTCallback callback);
 
 private:
     // Reconnect to the MQTT broker

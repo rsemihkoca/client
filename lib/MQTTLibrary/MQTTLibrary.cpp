@@ -10,8 +10,10 @@ void MQTTLibrary::begin(const char *mqttServer, int mqttPort, const char *mqttCl
     this->_mqttUsername = mqttUsername;
     this->_mqttPassword = mqttPassword;
 
+    IPAddress mqtt_server_ip;
+    mqtt_server_ip.fromString(mqttServer);
     // Set MQTT server and port
-    _mqttClient.setServer(mqttServer, mqttPort);
+    _mqttClient.setServer(mqtt_server_ip, mqttPort);
 
     // Set the global callback to handle incoming messages
     _mqttClient.setCallback([this](char* topic, byte* payload, unsigned int length) {
@@ -23,6 +25,7 @@ void MQTTLibrary::begin(const char *mqttServer, int mqttPort, const char *mqttCl
 
     // Connect to the MQTT broker
     connectToMQTT();
+    Serial.println("MQTT client initialized");
 }
 
 void MQTTLibrary::loop()
@@ -35,16 +38,32 @@ void MQTTLibrary::loop()
     _mqttClient.loop();
 }
 
-void MQTTLibrary::publish(const char *topic, const char *payload)
+bool MQTTLibrary::publish(const char *topic, const char *payload)
 {
-    _mqttClient.publish(topic, payload);
+    bool result = _mqttClient.publish(topic, (const uint8_t *)payload, strlen(payload));
+    if (!result)
+    {
+        Serial.println("Failed to publish message");
+        Serial.print("MQTT state: ");
+        Serial.println(_mqttClient.state());
+    }
+
+    return result;
 }
 
-void MQTTLibrary::subscribe(const char *topic, MQTTCallback callback)
+bool MQTTLibrary::subscribe(const char *topic, MQTTCallback callback)
 {
     // Store the callback in the map and subscribe to the topic
     _callbackMap[std::string(topic)] = callback;
-    _mqttClient.subscribe(topic);
+    bool result = _mqttClient.subscribe(topic);
+    if (!result)
+    {
+        Serial.println("Failed to subscribe to topic");
+        Serial.print("MQTT state: ");
+        Serial.println(_mqttClient.state());
+    }
+
+    return result;
 }
 
 void MQTTLibrary::connectToMQTT()
@@ -52,19 +71,21 @@ void MQTTLibrary::connectToMQTT()
     // Attempt to connect to the MQTT broker
     while (!_mqttClient.connected())
     {
-        if (_mqttClient.connect(this->_mqttClientId, this->_mqttUsername, this->_mqttPassword))
+        Serial.print("Attempting MQTT connection...");
+        if (_mqttClient.connect(this->_mqttClientId, this->_mqttUsername, this->_mqttPassword), true)
         {
-            // Resubscribe to all topics after reconnecting
+            Serial.println("Connected");
             for (const auto &pair : _callbackMap)
             {
+                Serial.print("Subscribing to topic: ");
+                Serial.println(pair.first.c_str());
                 _mqttClient.subscribe(pair.first.c_str());
             }
         }
-        else
-        {
-            // Wait 5 seconds before retrying
-            delay(5000);
-        }
+        Serial.print("Failed to connect to MQTT broker, rc=");
+        Serial.print(_mqttClient.state());
+        
+        delay(5000);
     }
 }
 
